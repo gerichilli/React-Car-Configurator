@@ -14,84 +14,73 @@ import Slideshow from '../Slideshow';
  * - Preview logic and behavior should remain the same
  * 
  */ 
-class Preview extends React.Component {
-  get index() {
-    return this.props?.models.findIndex(model => 
-      model.key === this.props.config?.model
-    );
+
+const Preview = ({ config, models, showAllModels, showSpecs, onChangeModel }) => {
+  const index = models.findIndex(model => 
+    model.key === config?.model
+  );
+
+  const items = models.map(model => ({
+    alt: model.name,
+    url: `${process.env.PUBLIC_URL}/cars/model_${model.key}/model_${model.key}_${config.color}_${config.wheels}.png`,
+    scale: ['x'].includes(model.key)
+  }));
+
+  const selectedModel = models.find(model =>
+    model.key === config.model
+  );
+
+  const selectedType = selectedModel?.types?.find(type =>
+    type.value === config.car_type
+  );
+
+  const specs = selectedType?.specs;
+
+  const handleOnClickPrev = () => {
+    const newIndex = index > 0
+      ? index - 1
+      : models.length - 1;
+    onChangeModel(models?.[newIndex]?.key);
   };
 
-  get items() {
-    return this.props.models.map(model => ({
-      alt: model.name,
-      url: `${process.env.PUBLIC_URL}/cars/model_${model.key}/model_${model.key}_${this.props.config.color}_${this.props.config.wheels}.png`,
-      scale: ['x'].includes(model.key)
-    }));
-  };
-
-  get selectedModel() {
-    return this.props.models.find(model =>
-      model.key === this.props.config.model
-    );
-  };
-
-  get selectedType() {
-    return this.selectedModel?.types?.find(type =>
-      type.value === this.props.config.car_type
-    );
-  };
-
-  get specs() {
-    return this.selectedType?.specs;
-  };
-
-  handleOnClickPrev = () => {
-    const newIndex = this.index > 0
-      ? this.index - 1
-      : this.props.models.length - 1;
-    this.props.onChangeModel(this.props.models?.[newIndex]?.key);
-  };
-
-  handleOnClickNext = () => {
-    const newIndex = this.index < this.props.models.length - 1
-      ? this.index + 1
+  const handleOnClickNext = () => {
+    const newIndex = index < models.length - 1
+      ? index + 1
       : 0;
-    this.props.onChangeModel(this.props.models?.[newIndex]?.key);
+    onChangeModel(models?.[newIndex]?.key);
   };
 
-  render() {
-    return (
-      <div className="preview">
+  return (
+    <div className="preview">
         <Slideshow
-          items={this.items}
-          index={this.index}
-          showPrev={this.props.showAllModels}
-          showNext={this.props.showAllModels}
-          onClickPrev={this.handleOnClickPrev}
-          onClickNext={this.handleOnClickNext}
+          items={items}
+          index={index}
+          showPrev={showAllModels}
+          showNext={showAllModels}
+          onClickPrev={handleOnClickPrev}
+          onClickNext={handleOnClickNext}
         />
         {
-          this.props.showSpecs ? (
+          showSpecs ? (
             <ul className="specs">
               <li>
-                <span className="specs-value">{this.specs?.range ?? ' - '}mi</span>
+                <span className="specs-value">{specs?.range ?? ' - '}mi</span>
                 <span className="specs-label">Range (EPA est.)</span>
               </li>
               <li>
-                <span className="specs-value">{this.specs?.top_speed ?? ' - '}mph</span>
+                <span className="specs-value">{specs?.top_speed ?? ' - '}mph</span>
                 <span className="specs-label">Top Speed</span>
               </li>
               <li>
-                <span className="specs-value">{this.specs?.acceleration_time ?? ' - '}s</span>
+                <span className="specs-value">{specs?.acceleration_time ?? ' - '}s</span>
                 <span className="specs-label">0-60 mph</span>
               </li>
             </ul>
           ) : null
         }
       </div>
-    );
-  };
-};
+  )
+}
 
 Preview.propTypes = {
   config: PropTypes.object,

@@ -1,7 +1,11 @@
 {
   "name": "react-car-configurator",
   "version": "0.1.0",
+  "private": false,
+  "homepage": "https://gerichilli.github.io/React-Car-Configurator/",
+  "repo": "https://github.com/gerichilli/React-Car-Configurator.git/",
   "dependencies": {
+    "gh-pages": "^3.2.3",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-icons": "^4.2.0",
@@ -11,7 +15,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": "react-app"

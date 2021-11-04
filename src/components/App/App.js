@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { models, initialConfig } from '../../data';
 // Styles
 import './App.css';
@@ -9,32 +9,30 @@ import Settings from '../Settings';
 import Summary from '../Summary';
 import Preview from '../Preview';
 import InteriorPreview from '../InteriorPreview';
+import UseLocalStorage from '../../hooks/UseLocalStorage';
 
 /*
- * TODO: Refactor App as a functional component
+ * TODO: Refactor App as a functional component OK
  *
  * Requirements:
- * - Compute total price using React hooks only when config or selectedModel change 
+ * - Compute total price using React hooks only when config or selectedModel change OK
  * - Create a custom hook to use localStorage to store the current step and config
  * - Switch from setState to the useLocalStorage hook
- * - Use function closures instead of this for callbacks and event handlers
- * - App logic and behavior should remain the same
+ * - Use function closures instead of this for callbacks and event handlers OK
+ * - App logic and behavior should remain the same Ok
  * 
  */ 
-class App extends React.Component {
-  state = {
-    currentStep: 0,
-    config: initialConfig?.['s'] ?? null
-  };
 
-  get selectedModel() {
-    return models.find(model =>
-      model?.key === this.state.config?.model
-    );
-  };
+function App() {
+  const {data: currentStep, setData: setCurrentStep} = UseLocalStorage("current_step", 0);
+  const {data: config, setData: setConfig} = UseLocalStorage("config", null);
+  const [totalPrice, setTotalPrice] = useState(0);
+  // From current config, get current modal by key like "x", "s", "y"
+  const selectedModel = models.find(model =>
+    model?.key === config?.model
+  );
 
-  get steps() {
-    return [
+  const steps = [
       {
         name: "car",
         settings: [
@@ -46,12 +44,76 @@ class App extends React.Component {
               value: model.key,
               label: model.name
             }))
+            // Object like
+            /* options: [
+              {
+                value: "s",
+                label: "Model S"
+              },
+              {
+                value: "x",
+                label: "Model X"
+              },
+              {
+                value: "y",
+                label: "Model Y"
+              }
+            ]
+            */
           },
           {
             label: "Select type",
             type: "text",
             prop: "car_type",
-            options: this.selectedModel?.types ?? [],
+            options: selectedModel?.types ?? [],
+            // Object like
+            /*
+              options: [
+                {
+                  label: "Long Range Plus",
+                  value: "long_range_plus",
+                  specs: {
+                    range: 402,
+                    top_speed: 155,
+                    acceleration_time: 3.7,
+                  },
+                  price: 69420
+                },
+                {
+                  label: "Performance",
+                  value: "performance",
+                  specs: {
+                    range: 387,
+                    top_speed: 163,
+                    acceleration_time: 2.3,
+                  },
+                  price: 91990,
+                  benefits: [
+                    "Quicker acceleration: 0-60 mph in 2.3s",
+                    "Ludicrous Mode",
+                    "Enhanced Interior Styling",
+                    "Carbon fiber spoiler"
+                  ]
+                },
+                {
+                  label: "Plaid",
+                  value: "plaid",
+                  specs: {
+                    range: 520,
+                    top_speed: 200,
+                    acceleration_time: 2.0,
+                  },
+                  price: 139990,
+                  benefits: [
+                    "Quickest 0-60 mph and quarter mile acceleration of any production car ever",
+                    "Acceleration from 0-60 mph: <2.0s",
+                    "Quarter mile: <9.0s",
+                    "1,100+ horsepower",
+                    "Tri Motor All-Wheel Drive"
+                  ]
+                },
+              ],
+            */
             disclaimer_1: "All cars have Dual Motor All-Wheel Drive, adaptive air suspension, premium interior and sound.",
             disclaimer_2: "Tesla All-Wheel Drive has two independent motors that digitally control torque to the front and rear wheels—for far better handling and traction control. Your car can drive on either motor, so you don't need to worry about getting stuck on the road."
           }
@@ -64,13 +126,38 @@ class App extends React.Component {
             label: "Select color",
             type: "color",
             prop: "color",
-            options: this.selectedModel?.colors ?? []
+            options: selectedModel?.colors ?? []
           },
+          /*
+          options: [
+            { label: "Pearl White Multi-Coat", value: "white", price: 0 },
+            { label: "Solid Black", value: "black", price: 1500 },
+            { label: "Midnight Silver Metallic", value: "silver", price: 1500 },
+            { label: "Deep Blue Metallic", value: "blue", price: 1500 },
+            { label: "Red Multi-Coat", value: "red", price: 2500 }
+          ];
+          */
           {
             label: "Select wheels",
             type: "image",
             prop: "wheels",
-            options: this.selectedModel?.wheels ?? []
+            options: selectedModel?.wheels ?? []
+          /*
+          options: [
+            {
+              src: `${process.env.PUBLIC_URL}/wheels/model_s/model_s_wheel_1.png`,
+              label: '19" Tempest Wheels',
+              value: "wheel_1",
+              price: 0
+            },
+            {
+              src: `${process.env.PUBLIC_URL}/wheels/model_s/model_s_wheel_2.png`,
+              label: '21" Sonic Carbon Twin Turbine Wheels',
+              value: "wheel_2",
+              price: 4500
+            }
+          ],
+          */
           }
         ]
       },
@@ -81,137 +168,135 @@ class App extends React.Component {
             label: "Select premium interior",
             type: "text",
             prop: "interior_color",
-            options: this.selectedModel?.interiorColors ?? []
+            options: selectedModel?.interiorColors ?? []
           },
           {
             label: "Select interior layout",
             type: "text",
             prop: "interior_layout",
-            options: this.selectedModel?.interiorLayouts ?? []
+            options: selectedModel?.interiorLayouts ?? []
           },
+          /*
+          options: [
+            { label: "Five seat interior", value: "five_seat", price: 0 },
+            { label: "Six seat interior", value: "six_seat", price: 6500 },
+            { label: "Seven seat interior", value: "seven_seat", price: 3500 },
+          ];
+          */
         ]
       },
       {
         name: "summary"
       }
-    ];
+  ];
+
+  useEffect(() => {
+    const basePrice = selectedModel?.types?.find(
+      type => type.value === config?.car_type
+    )?.price ?? 0;
+    const colorPrice = selectedModel?.colors?.find(
+      color => color.value === config?.color
+    )?.price ?? 0;
+    const wheelsPrice = selectedModel?.wheels?.find(
+      wheels => wheels.value === config?.wheels
+    )?.price ?? 0;
+    const interiorColorPrice = selectedModel?.interiorColors?.find(
+      interiorColor => interiorColor.value === config?.interior_color
+    )?.price ?? 0;
+    const interiorLayoutPrice = selectedModel?.interiorLayouts?.find(
+      interiorLayout => interiorLayout.value === config?.interior_layout
+    )?.price ?? 0;
+
+    setTotalPrice(basePrice + colorPrice + wheelsPrice + interiorColorPrice + interiorLayoutPrice) 
+  }, [config, selectedModel]) 
+
+  const goToStep = (step) => {
+    setCurrentStep(step);
   };
 
-  get totalPrice() {
-    const basePrice = this.selectedModel?.types?.find(
-      type => type.value === this.state.config?.car_type
-    )?.price ?? 0;
-    const colorPrice = this.selectedModel?.colors?.find(
-      color => color.value === this.state.config?.color
-    )?.price ?? 0;
-    const wheelsPrice = this.selectedModel?.wheels?.find(
-      wheels => wheels.value === this.state.config?.wheels
-    )?.price ?? 0;
-    const interiorColorPrice = this.selectedModel?.interiorColors?.find(
-      interiorColor => interiorColor.value === this.state.config?.interior_color
-    )?.price ?? 0;
-    const interiorLayoutPrice = this.selectedModel?.interiorLayouts?.find(
-      interiorLayout => interiorLayout.value === this.state.config?.interior_layout
-    )?.price ?? 0;
-
-    return basePrice + colorPrice + wheelsPrice + interiorColorPrice + interiorLayoutPrice;
-  };
-
-  goToStep = (step) => {
-    this.setState({ currentStep: step });
-  };
-
-  goToPrevStep = () => {
-    this.setState(prevState => {
-      const newStep = prevState.currentStep > 0
-        ? prevState.currentStep-1
-        : prevState.currentStep;
-      return { currentStep: newStep };
+  const goToPrevStep = () => {
+    setCurrentStep(prevStep => {
+      const newStep = prevStep > 0 ? prevStep - 1 : prevStep;
+      return newStep;
     });
   };
 
-  goToNextStep = () => {
-    this.setState(prevState => {
-      const newStep = prevState.currentStep < this.steps.length - 1
-        ? prevState.currentStep+1
-        : prevState.currentStep;
-      return { currentStep: newStep };
+  const goToNextStep = () => {
+    setCurrentStep(prevStep => {
+      const newStep = prevStep < steps.length - 1 ? prevStep + 1 : prevStep;
+      return newStep;
     });
   };
 
-  handleChangeModel = (model) => {
-    this.setState({ config: initialConfig[model] });
+  const handleChangeModel = (model) => {
+    setConfig(initialConfig[model]);
   };
 
-  handleOnSelectOption = (prop, value) => {
+  const handleOnSelectOption = (prop, value) => {
     if (prop === "model") {
-      this.handleChangeModel(value);
+      handleChangeModel(value);
     }
     else {
-      this.setState(prevState => ({
-        config: {
-          ...prevState.config,
+      setConfig(prevState => ({
+        ...prevState,
           [prop]: value
-        }
       }));
     }
   };
 
-  render() {
-    const isFirstStep = this.state.currentStep === 0;
-    const isLastStep = this.state.currentStep === this.steps.length - 1;
+  const isFirstStep = currentStep === 0;
+  const isLastStep = currentStep === steps.length - 1;
 
-    return (
-      <div className="app">
-        <Menu
-          items={this.steps.map(step => step.name)}
-          selectedItem={this.state.currentStep}
-          onSelectItem={this.goToStep}
-        />
-        <main className="app-content">
-          {
-            this.steps[this.state.currentStep]?.name === "interior" ? (
-              <InteriorPreview
-                interior={this.selectedModel?.interiorColors.find(
-                  interiorColor => interiorColor.value === this.state.config.interior_color
-                )}
-              />
-            ) : (
-              <Preview
-                config={this.state.config}
-                models={models}
-                showAllModels={isFirstStep}
-                showSpecs={!isLastStep}
-                onChangeModel={this.handleChangeModel}
-              />
-            )
-          }
-          {
-          isLastStep ? (
-            <Summary
-              config={this.state.config}
-              models={models}
-              totalPrice={this.totalPrice}
+  return (
+    <div className="app">
+      <Menu
+        items={steps.map(step => step.name)}
+        selectedItem={currentStep}
+        onSelectItem={goToStep}
+      />
+      <main className="app-content">
+        {
+          steps[currentStep]?.name === "interior" ? (
+            <InteriorPreview
+              interior={selectedModel?.interiorColors.find(
+                interiorColor => interiorColor.value === config.interior_color
+              )}
             />
           ) : (
-            <Settings
-              config={this.state.config}
-              settings={this.steps[this.state.currentStep].settings}
-              onSelectOption={this.handleOnSelectOption}
+            <Preview
+              config={config}
+              models={models}
+              showAllModels={isFirstStep}
+              showSpecs={!isLastStep}
+              onChangeModel={handleChangeModel}
             />
           )
         }
-        </main>
-        <Footer
-          totalPrice={this.totalPrice}
-          disablePrev={isFirstStep}
-          disableNext={isLastStep}
-          onClickPrev={this.goToPrevStep}
-          onClickNext={this.goToNextStep}
-        />
-      </div>
-    );
-  };
-};
+        {
+        isLastStep ? (
+          <Summary
+            config={config}
+            models={models}
+            totalPrice={totalPrice}
+          />
+        ) : (
+          <Settings
+            config={config}
+            settings={steps[currentStep].settings}
+            onSelectOption={handleOnSelectOption}
+          />
+        )
+      }
+      </main>
+      <Footer
+        totalPrice={totalPrice}
+        disablePrev={isFirstStep}
+        disableNext={isLastStep}
+        onClickPrev={goToPrevStep}
+        onClickNext={goToNextStep}
+      />
+    </div>
+  );
+}
 
 export default App;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { formatPrice } from '../../utils';
 // Styles
@@ -21,7 +21,7 @@ const Settings = ({
   onSelectOption = () => null
 }) => {
 
-  const selectedOptions = settings?.reduce(
+  const getInitialOptions = () => (settings?.reduce(
     (acc, setting) => ({
       ...acc,
       [setting.prop]: setting.options.find(option =>
@@ -29,7 +29,21 @@ const Settings = ({
       ) ?? []
     }),
     {}
-  );
+  ))
+
+  const [selectedOptions, setSelectedOptions] = useState(getInitialOptions);
+
+  useEffect(() => {
+    setSelectedOptions(settings?.reduce(
+      (acc, setting) => ({
+        ...acc,
+        [setting.prop]: setting.options.find(option =>
+          option.value === config[setting.prop]
+        ) ?? []
+      }),
+      {}
+    ));
+  }, [settings, config])
 
   return (
     <div className="settings">
