@@ -25,7 +25,7 @@ import UseLocalStorage from '../../hooks/UseLocalStorage';
 
 function App() {
   const {data: currentStep, setData: setCurrentStep} = UseLocalStorage("current_step", 0);
-  const {data: config, setData: setConfig} = UseLocalStorage("config", null);
+  const {data: config, setData: setConfig} = UseLocalStorage("config", initialConfig['s'] ?? null);
   const [totalPrice, setTotalPrice] = useState(0);
   // From current config, get current modal by key like "x", "s", "y"
   const selectedModel = models.find(model =>

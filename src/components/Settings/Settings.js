@@ -20,7 +20,6 @@ const Settings = ({
   settings = null,
   onSelectOption = () => null
 }) => {
-
   const getInitialOptions = () => (settings?.reduce(
     (acc, setting) => ({
       ...acc,
